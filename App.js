@@ -1,5 +1,5 @@
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React from 'react'
+import {Text, View} from 'react-native'
 
 export default class App extends React.Component {
   render() {
@@ -7,6 +7,6 @@ export default class App extends React.Component {
       <View>
         <Text>Open up App.js to start working on your app!</Text>
       </View>
-    );
+    )
   }
 }
