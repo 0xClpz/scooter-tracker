@@ -1,0 +1,26 @@
+// By default we restrict everything
+path / {
+    read(){
+        false
+    }
+    write(){
+        false
+    }
+}
+
+path /rides/{uid}  {
+    read(){
+        isSelf(uid)
+    }
+    write(){
+        isSelf(uid)
+    }
+}
+
+isLoggedIn(){
+    auth != null
+}
+
+isSelf(uid){
+   isLoggedIn() && auth.uid == uid
+}

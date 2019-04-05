@@ -1,0 +1,2 @@
+export const GEOTRACKING = 'GEOTRACKING'
+export const STORAGE_KEY = 'LOCATIONS'
