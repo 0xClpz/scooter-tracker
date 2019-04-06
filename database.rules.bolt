@@ -12,8 +12,10 @@ path /rides/{uid}  {
     read(){
         isSelf(uid)
     }
-    write(){
-        isSelf(uid)
+    path /{rideId} {
+        write(){
+            isSelf(uid)
+        }
     }
 }
 
