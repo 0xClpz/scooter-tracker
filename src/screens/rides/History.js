@@ -1,19 +1,60 @@
 import React, {Component, Fragment} from 'react'
-import {FlatList} from 'react-native'
+import {FlatList, View} from 'react-native'
 import {RidesProvider} from '../../providers/RideProvider'
-import {Text, Title, ListItem, Body, Right} from 'native-base'
+import {Text, Title, H3} from 'native-base'
+import {MapView} from 'expo'
 import {Screen} from '../../dumb/Screen'
 import {
   computeDistanceForRide,
   computeDurationForRide,
   computePriceForRide,
+  getRegionForCoordinates,
 } from '../../utils/utils'
 import {Money} from '../../dumb/Money'
 import {DateTime, Duration} from 'luxon'
-import {Distance} from '../../dumb/Distance'
+import {formatDistance} from '../../dumb/Distance'
 import PropTypes from 'prop-types'
+import styled from 'styled-components'
+import {prop} from 'ramda'
 
-const Row = ({item}) => {
+const Map = styled(MapView)`
+  flex: 1;
+  height: 150;
+`
+
+const Stats = styled.View`
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  background-color: rgb(243, 245, 246);
+  padding: 10px 0;
+`
+
+const DateRow = styled.View`
+  display: flex;
+  justify-content: space-between;
+  flex-direction: row;
+  padding: 24px;
+  background-color: white;
+`
+
+const StatsItemContainer = styled.View`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`
+
+const Container = styled.View`
+  flex: 1;
+  margin-bottom: 20px;
+  border-radius: 10;
+  elevation: 1;
+`
+
+const getHourFromMs = ms =>
+  DateTime.fromMillis(ms).toLocaleString(DateTime.TIME_24_SIMPLE)
+
+const RideCard = ({item}) => {
   const price = computePriceForRide(item.positions)
 
   const duration = Duration.fromObject({
@@ -22,27 +63,60 @@ const Row = ({item}) => {
 
   const date = DateTime.fromMillis(item.positions[0].timestamp)
     .setLocale('fr')
-    .toLocaleString(DateTime.DATETIME_SHORT)
+    .toLocaleString(DateTime.DATE_SHORT)
 
   const distance = computeDistanceForRide(item.positions)
 
+  const coordinates = item.positions.map(prop('coords'))
   return (
-    <ListItem icon>
-      <Body>
-        <Text>
-          {date} - {duration} - <Distance>{distance}</Distance>
-        </Text>
-      </Body>
-      <Right>
-        <Text>
-          <Money>{price}</Money>
-        </Text>
-      </Right>
-    </ListItem>
+    <Container>
+      <Map
+        pitchEnabled={false}
+        rotateEnabled={false}
+        scrollEnabled={false}
+        zoomEnabled={false}
+        initialRegion={getRegionForCoordinates(coordinates)}
+      >
+        <MapView.Marker coordinate={coordinates[0]} />
+        <MapView.Marker coordinate={coordinates[coordinates.length - 1]} />
+        <MapView.Polyline
+          coordinates={coordinates}
+          strokeWidth={1}
+          strokeColors={['#7F0000']}
+        />
+      </Map>
+      <Stats>
+        <StatsItemContainer>
+          <Text>🗾</Text>
+          <H3>{formatDistance(distance)}</H3>
+          <Text>Distance</Text>
+        </StatsItemContainer>
+        <StatsItemContainer>
+          <Text>🕑</Text>
+          <H3>{duration}</H3>
+          <Text>Time</Text>
+        </StatsItemContainer>
+      </Stats>
+      <DateRow>
+        <View>
+          <H3>{date}</H3>
+          <Text>
+            {`${getHourFromMs(item.positions[0].timestamp)} - ${getHourFromMs(
+              item.positions[item.positions.length - 1].timestamp
+            )}`}
+          </Text>
+        </View>
+        <View>
+          <Text bold>
+            <Money>{price}</Money>
+          </Text>
+        </View>
+      </DateRow>
+    </Container>
   )
 }
 
-Row.propTypes = {
+RideCard.propTypes = {
   item: PropTypes.object.isRequired,
 }
 
@@ -64,12 +138,12 @@ export class History extends Component {
           }
 
           return (
-            <Screen>
+            <Screen padding color={'rgb(240, 241, 243)'}>
               <Fragment>
                 <Title>Rides History</Title>
                 <FlatList
                   keyExtractor={item => item[0]}
-                  renderItem={({item}) => <Row item={item[1]} />}
+                  renderItem={({item}) => <RideCard item={item[1]} />}
                   data={Object.entries(Object.values(rides)).reverse()}
                 />
               </Fragment>
