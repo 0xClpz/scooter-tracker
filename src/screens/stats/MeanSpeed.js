@@ -1,13 +1,16 @@
 import React from 'react'
 import {ListItem, Left, Text, Body, Right} from 'native-base'
 import PropTypes from 'prop-types'
-import {computeMeanSpeedForRide} from '../../utils/utils'
-import {mean} from 'ramda'
+import {mean, flatten, path} from 'ramda'
 import {Speed} from '../../dumb/Speed'
 
 export const MeanSpeed = ({rides}) => {
   const meanSpeed = mean(
-    Object.values(rides).map(rides => computeMeanSpeedForRide(rides.positions))
+    flatten(
+      Object.values(rides).map(ride =>
+        ride.positions.map(path(['coords', 'speed']))
+      )
+    )
   )
 
   return (
