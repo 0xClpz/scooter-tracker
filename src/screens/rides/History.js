@@ -1,5 +1,5 @@
 import React, {Component, Fragment} from 'react'
-import {FlatList, View} from 'react-native'
+import {FlatList, View, ActionSheetIOS} from 'react-native'
 import {RidesProvider} from '../../providers/RideProvider'
 import {Text, Title, H3} from 'native-base'
 import {MapView} from 'expo'
@@ -16,6 +16,7 @@ import {formatDistance} from '../../dumb/Distance'
 import PropTypes from 'prop-types'
 import styled from 'styled-components'
 import {prop} from 'ramda'
+import firebase from 'firebase'
 
 const Map = styled(MapView)`
   flex: 1;
@@ -44,7 +45,7 @@ const StatsItemContainer = styled.View`
   align-items: center;
 `
 
-const Container = styled.View`
+const Container = styled.TouchableOpacity`
   flex: 1;
   margin-bottom: 20px;
   border-radius: 10;
@@ -54,7 +55,7 @@ const Container = styled.View`
 const getHourFromMs = ms =>
   DateTime.fromMillis(ms).toLocaleString(DateTime.TIME_24_SIMPLE)
 
-const RideCard = ({item}) => {
+const RideCard = ({item, deleteFunc}) => {
   const price = computePriceForRide(item.positions)
 
   const duration = Duration.fromObject({
@@ -69,7 +70,29 @@ const RideCard = ({item}) => {
 
   const coordinates = item.positions.map(prop('coords'))
   return (
-    <Container>
+    <Container
+      as={deleteFunc ? undefined : View}
+      activeOpacity={0.5}
+      onLongPress={
+        deleteFunc
+          ? () => {
+              ActionSheetIOS.showActionSheetWithOptions(
+                {
+                  options: ['Cancel', 'Remove'],
+                  destructiveButtonIndex: 1,
+                  cancelButtonIndex: 0,
+                },
+                buttonIndex => {
+                  if (buttonIndex === 1) {
+                    deleteFunc && deleteFunc()
+                    /* destructive action */
+                  }
+                }
+              )
+            }
+          : null
+      }
+    >
       <Map
         pitchEnabled={false}
         rotateEnabled={false}
@@ -118,6 +141,7 @@ const RideCard = ({item}) => {
 
 RideCard.propTypes = {
   item: PropTypes.object.isRequired,
+  deleteFunc: PropTypes.func,
 }
 
 export class History extends Component {
@@ -142,9 +166,24 @@ export class History extends Component {
               <Fragment>
                 <Title>Rides History</Title>
                 <FlatList
+                  removeClippedSubviews={false}
                   keyExtractor={item => item[0]}
-                  renderItem={({item}) => <RideCard item={item[1]} />}
-                  data={Object.entries(Object.values(rides)).reverse()}
+                  renderItem={({item}) => (
+                    <RideCard
+                      item={item[1]}
+                      deleteFunc={() => {
+                        firebase
+                          .database()
+                          .ref(
+                            `/rides/${firebase.auth().currentUser.uid}/${
+                              item[0]
+                            }`
+                          )
+                          .remove()
+                      }}
+                    />
+                  )}
+                  data={Object.entries(rides).reverse()}
                 />
               </Fragment>
             </Screen>
