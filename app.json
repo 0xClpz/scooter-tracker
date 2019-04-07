@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "scooter-tracker",
-    "slug": "test",
+    "slug": "scooter-tracker",
     "privacy": "public",
     "sdkVersion": "32.0.0",
     "platforms": ["ios", "android"],
