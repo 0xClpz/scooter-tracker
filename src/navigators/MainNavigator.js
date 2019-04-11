@@ -1,10 +1,11 @@
-import {createBottomTabNavigator} from 'react-navigation'
+import {createBottomTabNavigator, createStackNavigator} from 'react-navigation'
 import {Main} from '../screens/main/Main'
 import {Settings} from '../screens/settings/Settings'
 import {Stats} from '../screens/stats/Stats'
 import {History} from '../screens/rides/History'
 import React from 'react'
 import {Ionicons} from '@expo/vector-icons'
+import {RideDetails} from '../screens/rides/RideDetails'
 
 const IconMap = {
   Main: 'ios-add',
@@ -17,7 +18,10 @@ export const MainNavigator = createBottomTabNavigator(
   {
     Main,
     Stats,
-    History,
+    History: createStackNavigator({
+      RidesHistory: History,
+      RideDetails,
+    }),
     Settings,
   },
   {

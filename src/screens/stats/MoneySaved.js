@@ -16,7 +16,7 @@ export const MoneySaved = ({rides}) => {
         <Text>💵</Text>
       </Left>
       <Body>
-        <Text>Total money saved</Text>
+        <Text>Money saved</Text>
       </Body>
       <Right>
         <Text>
@@ -28,5 +28,5 @@ export const MoneySaved = ({rides}) => {
 }
 
 MoneySaved.propTypes = {
-  rides: PropTypes.object.isRequired,
+  rides: PropTypes.oneOfType([PropTypes.object, PropTypes.array]).isRequired,
 }

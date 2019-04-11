@@ -1,5 +1,5 @@
 import React, {Component, Fragment} from 'react'
-import {FlatList, View, ActionSheetIOS} from 'react-native'
+import {FlatList, View, ActionSheetIOS, ScrollView} from 'react-native'
 import {RidesProvider} from '../../providers/RideProvider'
 import {Text, Title, H3} from 'native-base'
 import {MapView} from 'expo'
@@ -17,6 +17,7 @@ import PropTypes from 'prop-types'
 import styled from 'styled-components'
 import {prop} from 'ramda'
 import firebase from 'firebase'
+import {RidePolyline} from '../../dumb/RidePolyline'
 
 const Map = styled(MapView)`
   flex: 1;
@@ -55,7 +56,7 @@ const Container = styled.TouchableOpacity`
 const getHourFromMs = ms =>
   DateTime.fromMillis(ms).toLocaleString(DateTime.TIME_24_SIMPLE)
 
-const RideCard = ({item, deleteFunc}) => {
+const RideCard = ({item, deleteFunc, viewDetails}) => {
   const price = computePriceForRide(item.positions)
 
   const duration = Duration.fromObject({
@@ -71,8 +72,9 @@ const RideCard = ({item, deleteFunc}) => {
   const coordinates = item.positions.map(prop('coords'))
   return (
     <Container
-      as={deleteFunc ? undefined : View}
+      as={deleteFunc || viewDetails ? undefined : View}
       activeOpacity={0.5}
+      onPress={viewDetails ? () => viewDetails() : null}
       onLongPress={
         deleteFunc
           ? () => {
@@ -100,13 +102,7 @@ const RideCard = ({item, deleteFunc}) => {
         zoomEnabled={false}
         initialRegion={getRegionForCoordinates(coordinates)}
       >
-        <MapView.Marker coordinate={coordinates[0]} />
-        <MapView.Marker coordinate={coordinates[coordinates.length - 1]} />
-        <MapView.Polyline
-          coordinates={coordinates}
-          strokeWidth={1}
-          strokeColors={['#7F0000']}
-        />
+        <RidePolyline ride={item} />
       </Map>
       <Stats>
         <StatsItemContainer>
@@ -142,10 +138,45 @@ const RideCard = ({item, deleteFunc}) => {
 RideCard.propTypes = {
   item: PropTypes.object.isRequired,
   deleteFunc: PropTypes.func,
+  viewDetails: PropTypes.func,
 }
 
+// eslint-disable-next-line
+export const DeadFlatList = ({navigate, item, rides}) => (
+  <FlatList
+    styles={{
+      flex: 1,
+    }}
+    removeClippedSubviews={false}
+    keyExtractor={item => {
+      return item[0]
+    }}
+    renderItem={({item}) => (
+      <RideCard
+        viewDetails={() => navigate('RideDetails', {ride: item[1]})}
+        item={item[1]}
+        deleteFunc={() => {
+          firebase
+            .database()
+            .ref(`/rides/${firebase.auth().currentUser.uid}/${item[0]}`)
+            .remove()
+        }}
+      />
+    )}
+    data={Object.entries(rides)}
+  />
+)
+
 export class History extends Component {
+  static propTypes = {
+    navigation: PropTypes.shape({
+      navigate: PropTypes.func.isRequired,
+    }).isRequired,
+  }
   render() {
+    const {
+      navigation: {navigate},
+    } = this.props
     return (
       <RidesProvider>
         {({empty, loading, rides}) => {
@@ -165,26 +196,30 @@ export class History extends Component {
             <Screen padding color={'rgb(240, 241, 243)'}>
               <Fragment>
                 <Title>Rides History</Title>
-                <FlatList
-                  removeClippedSubviews={false}
-                  keyExtractor={item => item[0]}
-                  renderItem={({item}) => (
-                    <RideCard
-                      item={item[1]}
-                      deleteFunc={() => {
-                        firebase
-                          .database()
-                          .ref(
-                            `/rides/${firebase.auth().currentUser.uid}/${
-                              item[0]
-                            }`
-                          )
-                          .remove()
-                      }}
-                    />
-                  )}
-                  data={Object.entries(rides).reverse()}
-                />
+                {/** Investiguate why the fuck the flatlist is not working :( **/}
+                <ScrollView>
+                  {Object.entries(rides)
+                    .reverse()
+                    .map(([key, item]) => (
+                      <RideCard
+                        key={key}
+                        viewDetails={() =>
+                          navigate('RideDetails', {
+                            ride: item,
+                          })
+                        }
+                        item={item}
+                        deleteFunc={() => {
+                          firebase
+                            .database()
+                            .ref(
+                              `/rides/${firebase.auth().currentUser.uid}/${key}`
+                            )
+                            .remove()
+                        }}
+                      />
+                    ))}
+                </ScrollView>
               </Fragment>
             </Screen>
           )

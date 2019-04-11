@@ -30,5 +30,5 @@ export const PeakSpeed = ({rides}) => {
 }
 
 PeakSpeed.propTypes = {
-  rides: PropTypes.object.isRequired,
+  rides: PropTypes.oneOfType([PropTypes.object, PropTypes.array]).isRequired,
 }

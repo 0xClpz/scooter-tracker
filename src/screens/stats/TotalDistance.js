@@ -15,7 +15,7 @@ export const TotalDistance = ({rides}) => {
         <Text>🚗</Text>
       </Left>
       <Body>
-        <Text>Total distance</Text>
+        <Text>Distance</Text>
       </Body>
       <Right>
         <Text>
@@ -27,5 +27,5 @@ export const TotalDistance = ({rides}) => {
 }
 
 TotalDistance.propTypes = {
-  rides: PropTypes.object.isRequired,
+  rides: PropTypes.oneOfType([PropTypes.object, PropTypes.array]).isRequired,
 }

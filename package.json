@@ -9,6 +9,7 @@
     "eject": "expo eject"
   },
   "dependencies": {
+    "add": "^2.0.6",
     "expo": "^32.0.0",
     "final-form": "^4.12.0",
     "firebase": "^5.9.2",
@@ -20,10 +21,12 @@
     "react": "16.5.0",
     "react-final-form": "^4.1.0",
     "react-native": "https://github.com/expo/react-native/archive/sdk-32.0.0.tar.gz",
+    "react-native-chart-kit": "^2.4.0",
     "react-native-easy-grid": "^0.2.1",
     "react-native-pose": "^0.9.0",
     "react-navigation": "^3.0.9",
-    "styled-components": "^4.2.0"
+    "styled-components": "^4.2.0",
+    "yarn": "^1.15.2"
   },
   "devDependencies": {
     "babel-eslint": "^10.0.1",

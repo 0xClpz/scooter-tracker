@@ -31,5 +31,5 @@ export const MeanSpeed = ({rides}) => {
 }
 
 MeanSpeed.propTypes = {
-  rides: PropTypes.object.isRequired,
+  rides: PropTypes.oneOfType([PropTypes.object, PropTypes.array]).isRequired,
 }

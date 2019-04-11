@@ -5,9 +5,21 @@ import {Grid, Row} from 'react-native-easy-grid'
 import {GEOTRACKING, STORAGE_KEY} from '../../constants/tasks'
 import {AsyncStorage} from 'react-native'
 import firebase from 'firebase'
+import {RideView} from './RideView'
+import {prop} from 'ramda'
+
+const trackingOptions = {
+  showsBackgroundLocationIndicator: true,
+  accuracy: Location.Accuracy.BestForNavigation,
+  distanceInterval: 5,
+}
 
 export class Main extends Component {
-  state = {}
+  state = {
+    riding: false,
+    currentRide: [],
+    location: null,
+  }
   async componentDidMount() {
     let {status} = await Permissions.askAsync(Permissions.LOCATION)
     if (status !== 'granted') {
@@ -16,30 +28,41 @@ export class Main extends Component {
       })
     }
 
-    let location = await Location.getCurrentPositionAsync({})
-    this.setState({location})
-
     const isRiding = await TaskManager.isTaskRegisteredAsync(GEOTRACKING)
     if (isRiding) {
+      this.startWatchingAsync()
       this.setState({
         riding: true,
       })
     }
+
+    Location.watchPositionAsync(trackingOptions, location => {
+      this.setState({location})
+    })
   }
 
   startRide = () => {
-    Location.startLocationUpdatesAsync(GEOTRACKING, {
-      showsBackgroundLocationIndicator: true,
-      accuracy: Location.Accuracy.BestForNavigation,
-      distanceInterval: 5,
-    })
+    Location.startLocationUpdatesAsync(GEOTRACKING, trackingOptions)
+    this.startWatchingAsync()
 
     this.setState({
       riding: true,
     })
   }
 
+  startWatchingAsync = () => {
+    this.intervalID = setInterval(async () => {
+      const positions = JSON.parse(await AsyncStorage.getItem(STORAGE_KEY))
+      if (positions.length !== this.state.currentRide.length) {
+        this.setState({
+          currentRide: positions,
+        })
+      }
+    }, 1000)
+  }
+
   stopRide = async () => {
+    this.intervalID && clearInterval(this.intervalID)
     Location.stopLocationUpdatesAsync(GEOTRACKING)
     this.setState({riding: false, loading: true})
     const positions = JSON.parse(await AsyncStorage.getItem(STORAGE_KEY))
@@ -53,37 +76,35 @@ export class Main extends Component {
   }
 
   render() {
-    const {location} = this.state
+    const {location, currentRide, riding} = this.state
+    const coordinates = currentRide.map(prop('coords'))
     return (
       <Container>
         <Grid>
           <Row size={5}>
-            <MapView
-              style={{flex: 1}}
-              region={
-                location
-                  ? {
-                      ...location.coords,
-                      latitudeDelta: 0.0001,
-                      longitudeDelta: 0.01,
-                    }
-                  : null
-              }
-              initialRegion={{
-                latitude: 37.78825,
-                longitude: -122.4324,
-                latitudeDelta: 0.0922,
-                longitudeDelta: 0.0421,
-              }}
-            >
-              {location && <MapView.Marker coordinate={location.coords} />}
-            </MapView>
+            {location && (
+              <MapView
+                style={{flex: 1}}
+                initialRegion={{
+                  ...location.coords,
+                  latitudeDelta: 0.0001,
+                  longitudeDelta: 0.01,
+                }}
+              >
+                <MapView.Marker coordinate={location.coords} />
+                {riding && (
+                  <MapView.Polyline
+                    coordinates={coordinates}
+                    strokeWidth={1}
+                    strokeColors={['#7F0000']}
+                  />
+                )}
+              </MapView>
+            )}
           </Row>
           <Row size={1}>
-            {this.state.riding ? (
-              <Button onPress={this.stopRide}>
-                <Text>STOP RIDE</Text>
-              </Button>
+            {riding ? (
+              <RideView ride={currentRide} stopRide={this.stopRide} />
             ) : (
               <Button onPress={this.startRide}>
                 <Text>START RIDE</Text>
