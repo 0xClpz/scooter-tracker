@@ -7,6 +7,7 @@ import {RidesProvider} from '../../providers/RideProvider'
 import {TotalDistance} from './TotalDistance'
 import {MeanSpeed} from './MeanSpeed'
 import {PeakSpeed} from './PeakSpeed'
+import {TotalRides} from './TotalRides'
 
 export class Stats extends Component {
   state = {
@@ -49,6 +50,7 @@ export class Stats extends Component {
                 <TotalDistance rides={rides} />
                 <MeanSpeed rides={rides} />
                 <PeakSpeed rides={rides} />
+                <TotalRides rides={rides} />
               </Fragment>
             </Screen>
           )
