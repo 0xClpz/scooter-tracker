@@ -24,6 +24,20 @@ TaskManager.defineTask(GEOTRACKING, async ({data: {locations}, error}) => {
     STORAGE_KEY,
     JSON.stringify(currentValues.concat(locations))
   )
+
+  await fetch(
+    'https://us-central1-scooter-tracker-e4a80.cloudfunctions.net/realtimeTracking',
+    {
+      method: 'POST',
+      body: JSON.stringify(locations),
+    }
+  )
+    .then(() => {
+      console.log('position sent to firebase')
+    })
+    .catch(() => {
+      console.log('failed to send position to firebase')
+    })
 })
 
 // Firebase setup

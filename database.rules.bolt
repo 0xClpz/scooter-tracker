@@ -19,6 +19,12 @@ path /rides/{uid}  {
     }
 }
 
+path /latest-position {
+    read(){
+        true
+    }
+}
+
 isLoggedIn(){
     auth != null
 }
